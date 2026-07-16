@@ -1,0 +1,139 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@400;600;700;900&display=swap');
+
+:root {
+  --black:  #000;
+  --s1:     #0a0a0a;
+  --s2:     #111;
+  --s3:     #1a1a1a;
+  --s4:     #242424;
+  --line:   #1a1a1a;
+  --line2:  #242424;
+  --fg:     #666;
+  --fg2:    #999;
+  --fg3:    #ccc;
+  --white:  #e8e8e8;
+  --red:    #ff3040;
+  --green:  #00e676;
+  --blue:   #3d8bff;
+  --cyan:   #00d4f0;
+  --amber:  #ffb300;
+  --mono:   'IBM Plex Mono', monospace;
+  --sans:   'IBM Plex Sans Condensed', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--black); color: var(--fg2); font-family: var(--mono); font-size: 12px; }
+
+.hidden { display: none !important; }
+
+/* ── TOPBAR ── */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px; height: 48px;
+  background: var(--s1); border-bottom: 1px solid var(--line2);
+}
+.brand h1 { font-family: var(--sans); font-size: 22px; font-weight: 900; letter-spacing: 5px; text-transform: uppercase; color: var(--white); }
+.brand-sub { font-size: 9px; letter-spacing: 2px; color: #333; margin-top: 1px; }
+.topbar-clock { font-size: 18px; color: var(--cyan); letter-spacing: 2px; font-variant-numeric: tabular-nums; }
+
+.app { min-height: 100vh; padding: 18px 20px; max-width: 1100px; margin: 0 auto; }
+
+/* ── CHANNEL GRID ── */
+.scene {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px;
+}
+
+.mini-screen {
+  background: #000; border: 1px solid var(--line2); border-radius: 2px;
+  aspect-ratio: 16/9; position: relative; overflow: hidden; cursor: pointer; transition: border-color .15s;
+}
+.mini-screen:hover { border-color: var(--blue); }
+
+.preview-placeholder {
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(135deg, var(--s2) 0px, var(--s2) 4px, var(--black) 4px, var(--black) 8px);
+  opacity: .5;
+}
+
+.screen-label {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 4px 7px; display: flex; justify-content: space-between; align-items: center;
+  background: linear-gradient(transparent, rgba(0,0,0,.9));
+}
+.scrolling-meta { font-size: 9px; letter-spacing: 1px; color: var(--cyan); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.status-tag { font-size: 8px; letter-spacing: 1.5px; color: var(--green); border: 1px solid var(--green); padding: 1px 4px; border-radius: 1px; flex-shrink: 0; animation: blink 2s steps(1) infinite; }
+@keyframes blink { 0%,69%{opacity:1}70%,99%{opacity:.2} }
+
+/* ── CHANNEL LIST ── */
+.ch-label { font-size: 9px; letter-spacing: 3px; color: #333; margin-bottom: 8px; text-transform: uppercase; }
+.ch-list { list-style: none; display: flex; flex-direction: column; gap: 3px; }
+.ch-list li button {
+  width: 100%; background: var(--s1); border: 1px solid var(--line2); color: var(--fg2);
+  font-family: var(--mono); font-size: 12px; padding: 9px 12px; border-radius: 2px; cursor: pointer;
+  display: flex; align-items: center; gap: 10px; text-align: left; transition: all .12s;
+  letter-spacing: .5px; text-transform: none; font-weight: 400;
+}
+.ch-list li button:hover { background: var(--s3); border-color: var(--blue); color: var(--white); }
+.ch-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; animation: blink 2s steps(1) infinite; }
+.ch-num { color: var(--cyan); font-size: 10px; min-width: 38px; }
+
+.no-ch { font-size: 10px; letter-spacing: 2px; color: #2a2a2a; padding: 18px; text-align: center; border: 1px dashed var(--line2); border-radius: 2px; }
+
+/* ── TV SECTION ── */
+#tvSection { display: flex; justify-content: center; }
+
+.tv-wrap { width: 100%; max-width: 800px; }
+
+.tv-bezel {
+  background: var(--s1); border: 1px solid var(--line2); border-radius: 3px; padding: 16px;
+}
+
+.tv-brand { font-size: 9px; letter-spacing: 2px; color: #2a2a2a; text-align: center; margin-bottom: 10px; text-transform: uppercase; }
+
+.tv-screen {
+  position: relative; background: #000; aspect-ratio: 16/9;
+  border-radius: 2px; overflow: hidden; border: 1px solid var(--line);
+}
+.tv-screen video { width: 100%; height: 100%; object-fit: contain; }
+.tv-noise { display: none; }
+
+.tv-overlay {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,.9);
+}
+.tv-overlay p { font-size: 12px; letter-spacing: 4px; color: #2a2a2a; text-transform: uppercase; }
+
+.tv-bottom { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
+.tv-leds { display: flex; gap: 7px; }
+.led { width: 8px; height: 8px; border-radius: 50%; }
+.led-g { background: var(--green); box-shadow: 0 0 6px var(--green); animation: blink 1.5s steps(1) infinite; }
+.led-r { background: var(--s4); }
+
+.tuned { flex: 1; font-family: var(--sans); font-size: 16px; font-weight: 700; letter-spacing: 3px; color: var(--white); text-transform: uppercase; }
+
+.tv-btns { display: flex; gap: 8px; align-items: center; }
+
+.vol-row { display: flex; align-items: center; gap: 7px; font-size: 9px; letter-spacing: 1px; color: #333; }
+.vol-row input[type="range"] {
+  -webkit-appearance: none; width: 80px; height: 3px; background: var(--s4);
+  border-radius: 2px; outline: none; cursor: pointer; border: none; padding: 0;
+}
+.vol-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 11px; height: 11px; border-radius: 50%; background: var(--cyan); cursor: pointer;
+}
+
+.btn-back {
+  background: var(--s2); border: 1px solid var(--line2); color: var(--fg);
+  font-family: var(--mono); font-size: 10px; letter-spacing: .5px; text-transform: none; font-weight: 400;
+  padding: 7px 12px; border-radius: 2px; cursor: pointer; transition: all .12s;
+}
+.btn-back:hover { border-color: #444; color: var(--fg3); }
+
+/* ── STATUS BAR ── */
+.status-bar {
+  display: flex; align-items: center; gap: 9px; margin-top: 8px;
+  padding: 7px 10px; background: var(--s1); border: 1px solid var(--line2);
+  border-radius: 2px; font-size: 10px; letter-spacing: 2px; color: #333;
+}
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: #222; flex-shrink: 0; transition: all .25s; }
+.status-dot.live { background: var(--green); box-shadow: 0 0 7px var(--green); animation: blink 1s steps(1) infinite; }
