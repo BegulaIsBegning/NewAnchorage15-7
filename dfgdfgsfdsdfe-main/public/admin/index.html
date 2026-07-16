@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Anchorage — Admin</title>
+  <link rel="icon" href="/broadcaster/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black:#000;--s1:#0a0a0a;--s2:#111;--s3:#1a1a1a;--s4:#242424;--s5:#2e2e2e;
+  --line:#1f1f1f;--line2:#2a2a2a;--line3:#333;
+  --fg:#888;--fg2:#aaa;--fg3:#ccc;--white:#e8e8e8;
+  --red:#ff3040;--red-bg:rgba(255,48,64,.08);
+  --green:#00e676;--green-bg:rgba(0,230,118,.07);
+  --blue:#3d8bff;--blue-bg:rgba(61,139,255,.08);
+  --amber:#ffb300;--amber-bg:rgba(255,179,0,.08);
+  --cyan:#00d4f0;--purple:#c04fff;
+  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans Condensed',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--black);color:var(--fg2);font-family:var(--mono);font-size:12px;}
+.hidden{display:none!important;}
+input,select,textarea,button{font-family:var(--mono);font-size:12px;}
+
+/* ── AUTH SCREEN ── */
+#authScreen{
+  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  background:var(--black);z-index:999;
+}
+.auth-box{
+  width:320px;border:1px solid var(--line3);background:var(--s1);border-radius:4px;padding:32px 28px;
+}
+.auth-box h2{font-family:var(--sans);font-size:22px;font-weight:900;letter-spacing:4px;color:var(--white);text-transform:uppercase;margin-bottom:4px;}
+.auth-box p{font-size:9px;letter-spacing:2px;color:#333;margin-bottom:24px;}
+.auth-box input{
+  width:100%;background:var(--s2);border:1px solid var(--line2);color:var(--white);
+  padding:10px 12px;border-radius:2px;outline:none;letter-spacing:2px;
+  transition:border-color .15s;margin-bottom:10px;
+}
+.auth-box input:focus{border-color:var(--blue);}
+.auth-box button{
+  width:100%;background:var(--blue);border:none;color:#fff;padding:10px;
+  border-radius:2px;cursor:pointer;letter-spacing:2px;font-weight:500;transition:opacity .15s;
+}
+.auth-box button:hover{opacity:.85;}
+.auth-error{color:var(--red);font-size:10px;letter-spacing:1px;margin-top:8px;min-height:16px;}
+
+/* ── TOPBAR ── */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;height:48px;background:var(--s1);border-bottom:1px solid var(--line2);
+  position:sticky;top:0;z-index:100;
+}
+.topbar h1{font-family:var(--sans);font-size:18px;font-weight:900;letter-spacing:4px;color:var(--white);text-transform:uppercase;}
+.topbar-sub{font-size:9px;letter-spacing:2px;color:#2a2a2a;margin-top:1px;}
+.badge-admin{
+  font-size:9px;letter-spacing:2px;padding:4px 10px;border-radius:2px;
+  border:1px solid var(--red);color:var(--red);background:var(--red-bg);
+}
+.clock{font-size:18px;color:var(--cyan);letter-spacing:2px;font-variant-numeric:tabular-nums;}
+
+/* ── LAYOUT ── */
+.app{padding:18px 20px;max-width:1100px;margin:0 auto;}
+.grid2{display:grid;grid-template-columns:260px 1fr;gap:14px;}
+@media(max-width:700px){.grid2{grid-template-columns:1fr;}}
+
+/* ── CARD ── */
+.card{background:var(--s1);border:1px solid var(--line2);border-radius:3px;padding:14px;margin-bottom:12px;}
+.card-title{font-size:9px;letter-spacing:3px;color:#333;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+.ctdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+
+/* ── CHANNEL LIST ── */
+.ch-item{
+  display:flex;align-items:center;gap:8px;padding:8px 10px;
+  border:1px solid var(--line2);border-radius:2px;background:var(--s2);
+  margin-bottom:5px;cursor:pointer;transition:all .12s;
+}
+.ch-item:hover{border-color:var(--blue);background:var(--s3);}
+.ch-item.selected{border-color:var(--cyan);background:rgba(0,212,240,.06);}
+.ch-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;animation:blink 2s steps(1) infinite;}
+@keyframes blink{0%,69%{opacity:1}70%,99%{opacity:.3}}
+.ch-name{flex:1;color:var(--white);letter-spacing:.5px;}
+.no-ch-msg{font-size:10px;letter-spacing:2px;color:#2a2a2a;padding:14px;text-align:center;border:1px dashed var(--line2);border-radius:2px;}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap;}
+.tab{
+  padding:6px 12px;background:var(--s2);border:1px solid var(--line2);
+  border-radius:2px;cursor:pointer;color:var(--fg);letter-spacing:1px;font-size:11px;
+  transition:all .12s;
+}
+.tab.active{background:var(--blue-bg);border-color:var(--blue);color:var(--blue);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ── FORM ELEMENTS ── */
+label{display:block;font-size:10px;letter-spacing:1px;color:var(--fg);margin-bottom:4px;margin-top:10px;}
+label:first-child{margin-top:0;}
+input[type=text],input[type=number],input[type=url],textarea,select{
+  width:100%;background:var(--s2);border:1px solid var(--line2);
+  color:var(--white);padding:8px 10px;border-radius:2px;outline:none;
+  transition:border-color .15s;resize:vertical;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--blue);}
+select option{background:var(--s2);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.hint{font-size:10px;color:#333;letter-spacing:.5px;margin-top:6px;line-height:1.5;}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:2px;border:none;cursor:pointer;font-size:11px;letter-spacing:1px;transition:opacity .12s;font-family:var(--mono);}
+.btn:hover{opacity:.82;}
+.btn:disabled{opacity:.3;cursor:not-allowed;}
+.btn-blue{background:var(--blue);color:#fff;}
+.btn-red{background:var(--red);color:#fff;}
+.btn-amber{background:var(--amber);color:#000;}
+.btn-ghost{background:transparent;border:1px solid var(--line2);color:var(--fg2);}
+.btn-green{background:var(--green);color:#000;}
+.btn-row{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+
+/* ── COLOR SWATCHES ── */
+.swatch-row{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}
+.swatch{width:22px;height:22px;border-radius:2px;cursor:pointer;border:2px solid transparent;transition:border-color .12s;}
+.swatch.selected{border-color:var(--white);}
+
+/* ── CHANNEL TARGET BAR ── */
+.target-bar{
+  display:flex;align-items:center;gap:10px;padding:8px 12px;
+  background:var(--s2);border:1px solid var(--line2);border-radius:2px;margin-bottom:14px;
+}
+.target-label{font-size:9px;letter-spacing:2px;color:#333;text-transform:uppercase;white-space:nowrap;}
+.target-ch{font-size:13px;color:var(--cyan);letter-spacing:1px;}
+
+/* ── LOG ── */
+.log{
+  background:var(--s2);border:1px solid var(--line2);border-radius:2px;
+  padding:10px;height:120px;overflow-y:auto;font-size:10px;letter-spacing:.3px;
+  line-height:1.7;color:var(--fg);margin-top:10px;
+}
+.log-entry{padding:1px 0;}
+.log-entry.ok{color:var(--green);}
+.log-entry.err{color:var(--red);}
+.log-entry.info{color:var(--cyan);}
+
+/* ── FILE UPLOAD ── */
+.file-zone{
+  border:1px dashed var(--line3);border-radius:2px;padding:14px;text-align:center;
+  cursor:pointer;transition:border-color .15s;color:var(--fg);font-size:11px;letter-spacing:1px;
+}
+.file-zone:hover{border-color:var(--blue);color:var(--blue);}
+.file-zone input{display:none;}
+.file-name{font-size:10px;color:var(--amber);margin-top:5px;word-break:break-all;}
+
+/* ── DANGER ZONE ── */
+.danger-card{border-color:rgba(255,48,64,.25);background:var(--red-bg);}
+
+/* ── OVERLAY POSITION PICKER ── */
+.pos-preview{
+  position:relative;width:100%;aspect-ratio:16/9;
+  border:1px solid var(--purple);border-radius:3px;background:var(--s2);
+}
+.pos-spot{
+  position:absolute;top:0;left:0;width:22px;height:22px;border-radius:50%;
+  background:var(--s2);border:1px solid var(--line3);cursor:pointer;
+  transform:translate(-50%,-50%);transition:all .12s;padding:0;
+}
+.pos-spot::after{content:"";display:block;width:6px;height:6px;margin:auto;border-radius:50%;background:var(--fg);transition:background .12s;}
+.pos-spot:hover{border-color:var(--blue);}
+.pos-spot:hover::after{background:var(--blue);}
+.pos-spot.selected{border-color:var(--purple);background:rgba(192,79,255,.14);}
+.pos-spot.selected::after{background:var(--purple);}
+.pos-spot[data-pos="top-left"]{top:16%;left:8%;}
+.pos-spot[data-pos="top-center"]{top:16%;left:50%;}
+.pos-spot[data-pos="top-right"]{top:16%;left:92%;}
+.pos-spot[data-pos="middle-left"]{top:50%;left:8%;}
+.pos-spot[data-pos="center"]{top:50%;left:50%;}
+.pos-spot[data-pos="middle-right"]{top:50%;left:92%;}
+.pos-spot[data-pos="bottom-left"]{top:84%;left:8%;}
+.pos-spot[data-pos="bottom-center"]{top:84%;left:50%;}
+.pos-spot[data-pos="bottom-right"]{top:84%;left:92%;}
+.pos-readout{font-size:10px;letter-spacing:1px;color:var(--purple);margin-top:8px;text-align:center;}
+</style>
+</head>
+<body>
+
+<!-- AUTH GATE -->
+<div id="authScreen">
+  <div class="auth-box">
+    <h2>Admin</h2>
+    <p>ANCHORAGE CONTROL PANEL</p>
+    <input type="password" id="authInput" placeholder="Password" autocomplete="current-password"/>
+    <button id="authBtn">ENTER</button>
+    <div class="auth-error" id="authError"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" class="hidden">
+
+  <div class="topbar">
+    <div>
+      <h1>Admin Panel</h1>
+      <div class="topbar-sub">Anchorage Broadcasting Network</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <span class="clock" id="clockDisplay">--:--:--</span>
+      <span class="badge-admin">ADMIN</span>
+    </div>
+  </div>
+
+  <div class="app">
+    <div class="grid2">
+
+      <!-- LEFT: CHANNELS -->
+      <div>
+        <div class="card">
+          <div class="card-title"><span class="ctdot" style="background:var(--green)"></span>Live Channels</div>
+          <div id="chList"><div class="no-ch-msg">No channels on air.</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="ctdot" style="background:var(--fg)"></span>Activity Log</div>
+          <div class="log" id="logBox"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT: CONTROLS -->
+      <div>
+
+        <!-- TARGET BAR -->
+        <div class="target-bar">
+          <span class="target-label">Target →</span>
+          <span class="target-ch" id="targetDisplay">ALL CHANNELS</span>
+          <button class="btn btn-ghost" id="btnTargetAll" style="margin-left:auto;font-size:10px;">Select All</button>
+        </div>
+
+        <!-- OVERLAY POSITION -->
+        <div class="card">
+          <div class="card-title"><span class="ctdot" style="background:var(--purple)"></span>Overlay Position <span style="text-transform:none;letter-spacing:0;color:#333;">— toast / image / video, rendered inside the transmission</span></div>
+          <div class="pos-preview" id="posPreview">
+            <button class="pos-spot" data-pos="top-left" title="Top left"></button>
+            <button class="pos-spot" data-pos="top-center" title="Top center"></button>
+            <button class="pos-spot" data-pos="top-right" title="Top right"></button>
+            <button class="pos-spot" data-pos="middle-left" title="Middle left"></button>
+            <button class="pos-spot selected" data-pos="center" title="Center"></button>
+            <button class="pos-spot" data-pos="middle-right" title="Middle right"></button>
+            <button class="pos-spot" data-pos="bottom-left" title="Bottom left"></button>
+            <button class="pos-spot" data-pos="bottom-center" title="Bottom center"></button>
+            <button class="pos-spot" data-pos="bottom-right" title="Bottom right"></button>
+          </div>
+          <div class="pos-readout" id="posReadout">Position: Center</div>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs">
+          <button class="tab active" data-tab="toast">💬 Toast</button>
+          <button class="tab" data-tab="image">🖼 Image</button>
+          <button class="tab" data-tab="video">🎬 Video</button>
+          <button class="tab" data-tab="audio">🔊 Audio</button>
+          <button class="tab" data-tab="takedown">⚡ Takedown</button>
+        </div>
+
+        <!-- TOAST -->
+        <div class="tab-panel active" id="panel-toast">
+          <div class="card">
+            <div class="card-title"><span class="ctdot" style="background:var(--blue)"></span>Send Toast Notification</div>
+            <label>Title</label>
+            <input type="text" id="toastTitle" value="ADMIN" maxlength="40" placeholder="Notification title"/>
+            <label>Message <span style="color:#333;font-size:9px;letter-spacing:1px;">— HTML supported</span></label>
+            <textarea id="toastMsg" rows="4" maxlength="4000" placeholder="HTML supported: Hey &lt;a href=&quot;/path&quot;&gt;click here&lt;/a&gt; or &lt;b&gt;bold&lt;/b&gt; or SVG sprites…"></textarea>
+            <div style="margin-top:8px;">
+              <div style="font-size:9px;letter-spacing:2px;color:#333;margin-bottom:4px;">PREVIEW</div>
+              <div id="toastPreview" style="
+                background:#0a0a0a;border:1px solid #3d8bff;border-radius:3px;
+                padding:11px 16px;font-family:'IBM Plex Mono',monospace;font-size:12px;
+                color:#e8e8e8;letter-spacing:.4px;line-height:1.5;min-height:44px;word-break:break-word;
+              ">
+                <div id="toastPreviewTitle" style="font-size:9px;letter-spacing:2px;margin-bottom:4px;color:#3d8bff;">ADMIN</div>
+                <div id="toastPreviewBody" style="color:#e8e8e8;"></div>
+              </div>
+            </div>
+            <label>Duration (seconds)</label>
+            <input type="number" id="toastDur" value="6" min="2" max="60" style="width:80px"/>
+            <label>Color</label>
+            <div class="swatch-row" id="toastSwatches">
+              <div class="swatch selected" data-color="#3d8bff" style="background:#3d8bff" title="Blue"></div>
+              <div class="swatch" data-color="#ff3040" style="background:#ff3040" title="Red"></div>
+              <div class="swatch" data-color="#00e676" style="background:#00e676" title="Green"></div>
+              <div class="swatch" data-color="#ffb300" style="background:#ffb300" title="Amber"></div>
+              <div class="swatch" data-color="#c04fff" style="background:#c04fff" title="Purple"></div>
+              <div class="swatch" data-color="#00d4f0" style="background:#00d4f0" title="Cyan"></div>
+              <div class="swatch" data-color="#e8e8e8" style="background:#e8e8e8" title="White"></div>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-blue" id="btnSendToast">Send Toast</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- IMAGE -->
+        <div class="tab-panel" id="panel-image">
+          <div class="card">
+            <div class="card-title"><span class="ctdot" style="background:var(--amber)"></span>Push Image Overlay</div>
+            <label>Image URL</label>
+            <input type="url" id="imgUrl" placeholder="https://…/image.png"/>
+            <p class="hint">Or upload a file (it becomes a temporary data URL sent to viewers):</p>
+            <div class="file-zone" id="imgZone">
+              <input type="file" id="imgFile" accept="image/*"/>
+              Click to upload image
+              <div class="file-name" id="imgFileName"></div>
+            </div>
+            <div class="row2" style="margin-top:10px;">
+              <div>
+                <label>Duration (s, 0 = until dismissed)</label>
+                <input type="number" id="imgDur" value="0" min="0" max="300"/>
+              </div>
+              <div>
+                <label>Background dim</label>
+                <input type="number" id="imgDim" value="0.6" min="0" max="1" step="0.05"/>
+              </div>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-amber" id="btnSendImg">Push Image</button>
+              <button class="btn btn-ghost" id="btnClearImg">Clear Overlay</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIDEO -->
+        <div class="tab-panel" id="panel-video">
+          <div class="card">
+            <div class="card-title"><span class="ctdot" style="background:var(--purple)"></span>Push Video Overlay</div>
+            <label>Video URL</label>
+            <input type="url" id="vidUrl" placeholder="https://…/clip.mp4"/>
+            <p class="hint">Or upload a file:</p>
+            <div class="file-zone" id="vidZone">
+              <input type="file" id="vidFile" accept="video/*"/>
+              Click to upload video
+              <div class="file-name" id="vidFileName"></div>
+            </div>
+            <div class="row2" style="margin-top:10px;">
+              <div>
+                <label>Background dim</label>
+                <input type="number" id="vidDim" value="0.85" min="0" max="1" step="0.05"/>
+              </div>
+              <div>
+                <label>Loop</label>
+                <select id="vidLoop"><option value="0">No (auto-close)</option><option value="1">Yes</option></select>
+              </div>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-blue" id="btnSendVid" style="background:var(--purple)">Push Video</button>
+              <button class="btn btn-ghost" id="btnClearVid">Clear Overlay</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- AUDIO -->
+        <div class="tab-panel" id="panel-audio">
+          <div class="card">
+            <div class="card-title"><span class="ctdot" style="background:var(--green)"></span>Push Audio</div>
+            <label>Audio URL</label>
+            <input type="url" id="audUrl" placeholder="https://…/sound.mp3"/>
+            <p class="hint">Or upload a file:</p>
+            <div class="file-zone" id="audZone">
+              <input type="file" id="audFile" accept="audio/*"/>
+              Click to upload audio
+              <div class="file-name" id="audFileName"></div>
+            </div>
+            <div class="row2" style="margin-top:10px;">
+              <div>
+                <label>Volume (0–1)</label>
+                <input type="number" id="audVol" value="1" min="0" max="1" step="0.05"/>
+              </div>
+              <div>
+                <label>Loop</label>
+                <select id="audLoop"><option value="0">No</option><option value="1">Yes</option></select>
+              </div>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-green" id="btnSendAud">▶ Play Audio</button>
+              <button class="btn btn-ghost" id="btnStopAud">⏹ Stop Audio</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAKEDOWN -->
+        <div class="tab-panel" id="panel-takedown">
+          <div class="card danger-card">
+            <div class="card-title"><span class="ctdot" style="background:var(--red)"></span>Channel Takedown</div>
+            <p class="hint" style="color:var(--fg2);margin-bottom:12px;">
+              Forces a broadcaster off-air immediately. Viewers will see "End of transmission."
+              Select a channel from the left panel first.
+            </p>
+            <div id="takedownTarget" style="color:var(--fg);font-size:11px;letter-spacing:1px;margin-bottom:10px;">
+              No channel selected.
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-red" id="btnTakedown" disabled>⚡ Take Channel Off-Air</button>
+            </div>
+            <p class="hint" style="margin-top:10px;">This cannot be undone. The broadcaster must go live again manually.</p>
+          </div>
+          <div class="card" style="margin-top:10px;">
+            <div class="card-title"><span class="ctdot" style="background:var(--amber)"></span>Push Clear All Overlays</div>
+            <p class="hint" style="margin-bottom:10px;">Removes any active image/video overlay and stops pushed audio for the target.</p>
+            <div class="btn-row">
+              <button class="btn btn-amber" id="btnClearAll">✕ Clear All Overlays</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+"use strict";
+const socket = io({ path: "/socket.io" });
+const $ = id => document.getElementById(id);
+
+// ── CLOCK ─────────────────────────────────────────────────────────────────────
+setInterval(()=>{ $("clockDisplay").textContent = new Date().toLocaleTimeString("en-US",{hour12:false}); }, 1000);
+$("clockDisplay").textContent = new Date().toLocaleTimeString("en-US",{hour12:false});
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+let authed = false;
+function doAuth() {
+  const pw = $("authInput").value;
+  socket.emit("admin:auth", pw, (res) => {
+    if (res.ok) {
+      authed = true;
+      $("authScreen").classList.add("hidden");
+      $("mainApp").classList.remove("hidden");
+      renderChannels(res.channels || []);
+      log("Authenticated as administrator.", "ok");
+    } else {
+      $("authError").textContent = res.error || "Access denied.";
+      $("authInput").value = "";
+    }
+  });
+}
+$("authBtn").onclick = doAuth;
+$("authInput").addEventListener("keydown", e => { if (e.key === "Enter") doAuth(); });
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let channels = [];
+let selectedChannel = null; // null = "all"
+let selectedToastColor = "#3d8bff";
+let selectedPosition = "center"; // where toast/image/video render inside the transmission
+
+// File blobs held in memory to be sent as base64 data URLs
+let imgDataUrl = null, vidDataUrl = null, audDataUrl = null;
+
+// ── LOG ───────────────────────────────────────────────────────────────────────
+function log(msg, type = "info") {
+  const box = $("logBox");
+  const d = document.createElement("div");
+  d.className = "log-entry " + type;
+  const t = new Date().toLocaleTimeString("en-US",{hour12:false});
+  d.textContent = `[${t}] ${msg}`;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+  // Keep max 200 lines
+  while (box.children.length > 200) box.removeChild(box.firstChild);
+}
+
+// ── CHANNELS ──────────────────────────────────────────────────────────────────
+socket.on("admin:channels-updated", list => {
+  channels = Array.isArray(list) ? list : [];
+  renderChannels(channels);
+});
+
+function renderChannels(list) {
+  channels = list;
+  const el = $("chList");
+  el.innerHTML = "";
+  if (!list.length) {
+    el.innerHTML = '<div class="no-ch-msg">No channels on air.</div>';
+    if (selectedChannel && !list.includes(selectedChannel)) {
+      selectedChannel = null;
+      updateTargetBar();
+    }
+    return;
+  }
+  list.forEach((id, i) => {
+    const d = document.createElement("div");
+    d.className = "ch-item" + (selectedChannel === id ? " selected" : "");
+    d.innerHTML = `<span class="ch-dot"></span><span class="ch-name">${id}</span><span style="font-size:9px;color:#333;letter-spacing:1px;">CH ${String(i+1).padStart(2,"0")}</span>`;
+    d.onclick = () => {
+      selectedChannel = selectedChannel === id ? null : id;
+      renderChannels(channels);
+      updateTargetBar();
+    };
+    el.appendChild(d);
+  });
+  // Validate selection
+  if (selectedChannel && !list.includes(selectedChannel)) {
+    selectedChannel = null;
+    updateTargetBar();
+  }
+}
+
+function updateTargetBar() {
+  $("targetDisplay").textContent = selectedChannel ? selectedChannel.toUpperCase() : "ALL CHANNELS";
+  $("takedownTarget").textContent = selectedChannel ? `Channel: ${selectedChannel}` : "No channel selected. Pick one from the list.";
+  $("btnTakedown").disabled = !selectedChannel;
+}
+
+$("btnTargetAll").onclick = () => { selectedChannel = null; renderChannels(channels); updateTargetBar(); };
+updateTargetBar();
+
+// ── OVERLAY POSITION PICKER ───────────────────────────────────────────────────
+function updatePosPicker() {
+  document.querySelectorAll(".pos-spot").forEach(el => {
+    el.classList.toggle("selected", el.dataset.pos === selectedPosition);
+  });
+  const label = selectedPosition.split("-").map(w => w[0].toUpperCase()+w.slice(1)).join(" ");
+  $("posReadout").textContent = "Position: " + label;
+}
+document.querySelectorAll(".pos-spot").forEach(el => {
+  el.onclick = () => { selectedPosition = el.dataset.pos; updatePosPicker(); };
+});
+updatePosPicker();
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+document.querySelectorAll(".tab").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+    btn.classList.add("active");
+    $("panel-" + btn.dataset.tab).classList.add("active");
+  };
+});
+
+// ── SHARED SANITIZER (mirrors client) ─────────────────────────────────────────
+// Used here for live preview so WYSIWYG matches what viewers see.
+(function() {
+  const ALLOWED_TAGS = new Set([
+    "a","b","i","em","strong","u","s","strike","br","span","small","code","pre",
+    "img","svg","use","symbol","defs","path","circle","rect","g","title",
+    "ul","ol","li","p","hr",
+  ]);
+  const ALLOWED_ATTRS = {
+    "*":   /^(class|id|style|title|lang|dir|aria-[a-z-]+|role|tabindex|data-[a-z-]+)$/i,
+    "a":   /^(href|target|rel|download)$/i,
+    "img": /^(src|alt|width|height|loading|decoding|crossorigin)$/i,
+    "svg": /^(xmlns|viewbox|width|height|fill|stroke|stroke-width|aria-hidden|focusable|role|version|x|y|preserveaspectratio)$/i,
+    "use": /^(href|xlink:href|x|y|width|height|transform)$/i,
+    "path|circle|rect|g|symbol|defs|title": /^(d|cx|cy|r|x|y|width|height|fill|stroke|stroke-width|transform|id|viewbox|preserveaspectratio|aria-label|role)$/i,
+  };
+  function isSafeUrl(val) {
+    const v = val.trim().toLowerCase();
+    return v.startsWith("http://") || v.startsWith("https://") || v.startsWith("/") || v.startsWith("#") || v.startsWith("data:image/");
+  }
+  function isSafeStyle(val) {
+    const v = val.toLowerCase();
+    if (/expression\s*\(/.test(v) || /javascript\s*:/.test(v)) return false;
+    const ms = v.match(/url\s*\(\s*(['"]?)(.+?)\1\s*\)/g);
+    if (ms) for (const m of ms) { const inner = m.replace(/url\s*\(\s*['"]?/,"").replace(/['"]?\s*\)$/,"").trim(); if (!isSafeUrl(inner) && !inner.startsWith("data:")) return false; }
+    return true;
+  }
+  window.sanitizeHTML = function(html) {
+    if (!html) return "";
+    const doc = new DOMParser().parseFromString(`<!DOCTYPE html><html><body>${html}</body></html>`, "text/html");
+    function clean(node) {
+      if (node.nodeType === Node.TEXT_NODE) return node.cloneNode();
+      if (node.nodeType !== Node.ELEMENT_NODE) return null;
+      const tag = node.tagName.toLowerCase();
+      if (!ALLOWED_TAGS.has(tag)) {
+        const frag = document.createDocumentFragment();
+        node.childNodes.forEach(c => { const r = clean(c); if (r) frag.appendChild(r); });
+        return frag;
+      }
+      const isSVG = ["svg","use","path","circle","rect","g","symbol","defs","title"].includes(tag);
+      const out = isSVG ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag);
+      const gp = ALLOWED_ATTRS["*"];
+      const tp = ALLOWED_ATTRS[tag] || ALLOWED_ATTRS[Object.keys(ALLOWED_ATTRS).find(k => k.split("|").includes(tag))] || null;
+      for (const attr of node.attributes) {
+        const name = attr.name.toLowerCase(), val = attr.value;
+        if (name.startsWith("on")) continue;
+        if (!gp.test(name) && !(tp && tp.test(name))) continue;
+        if ((name === "href" || name === "xlink:href" || name === "src") && !isSafeUrl(val)) continue;
+        if (name === "style" && !isSafeStyle(val)) continue;
+        if (tag === "a" && name === "href") { out.setAttribute("href", val); out.setAttribute("target","_blank"); out.setAttribute("rel","noopener noreferrer"); continue; }
+        try { out.setAttribute(attr.name, val); } catch(_) {}
+      }
+      node.childNodes.forEach(c => { const r = clean(c); if (r) out.appendChild(r); });
+      return out;
+    }
+    const frag = document.createDocumentFragment();
+    doc.body.childNodes.forEach(c => { const r = clean(c); if (r) frag.appendChild(r); });
+    const w = document.createElement("div"); w.appendChild(frag); return w.innerHTML;
+  };
+})();
+
+// ── TOAST COLOR SWATCHES ──────────────────────────────────────────────────────
+document.querySelectorAll("#toastSwatches .swatch").forEach(sw => {
+  sw.onclick = () => {
+    document.querySelectorAll("#toastSwatches .swatch").forEach(s => s.classList.remove("selected"));
+    sw.classList.add("selected");
+    selectedToastColor = sw.dataset.color;
+    updateToastPreview();
+  };
+});
+
+// ── TOAST LIVE PREVIEW ────────────────────────────────────────────────────────
+function updateToastPreview() {
+  const color = selectedToastColor || "#3d8bff";
+  const preview = $("toastPreview");
+  if (preview) preview.style.borderColor = color;
+  const titleEl = $("toastPreviewTitle");
+  if (titleEl) { titleEl.style.color = color; titleEl.innerHTML = sanitizeHTML(($("toastTitle").value || "ADMIN").toUpperCase()); }
+  const bodyEl = $("toastPreviewBody");
+  if (bodyEl) bodyEl.innerHTML = sanitizeHTML($("toastMsg").value || "");
+}
+$("toastTitle").addEventListener("input", updateToastPreview);
+$("toastMsg").addEventListener("input", updateToastPreview);
+updateToastPreview();
+
+// ── HELPER: PUSH ──────────────────────────────────────────────────────────────
+function push(payload) {
+  if (!authed) return;
+  socket.emit("admin:push", { channelId: selectedChannel || "all", ...payload });
+}
+
+// ── FILE HELPERS ──────────────────────────────────────────────────────────────
+function fileZone(zoneId, inputId, nameId, maxMB, cb) {
+  const zone = $(zoneId), input = $(inputId), nameEl = $(nameId);
+  zone.onclick = () => input.click();
+  input.onchange = () => {
+    const f = input.files[0];
+    if (!f) return;
+    if (f.size > maxMB * 1024 * 1024) {
+      alert(`File too large. Max ${maxMB} MB for direct push.`);
+      input.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      nameEl.textContent = f.name;
+      cb(e.target.result);
+    };
+    reader.readAsDataURL(f);
+    input.value = "";
+  };
+  zone.ondragover = e => { e.preventDefault(); zone.style.borderColor = "var(--blue)"; };
+  zone.ondragleave = () => { zone.style.borderColor = ""; };
+  zone.ondrop = e => {
+    e.preventDefault();
+    zone.style.borderColor = "";
+    const f = e.dataTransfer.files[0];
+    if (!f) return;
+    if (f.size > maxMB * 1024 * 1024) { alert(`File too large. Max ${maxMB} MB.`); return; }
+    const reader = new FileReader();
+    reader.onload = ev => { nameEl.textContent = f.name; cb(ev.target.result); };
+    reader.readAsDataURL(f);
+  };
+}
+
+fileZone("imgZone","imgFile","imgFileName", 8,  url => { imgDataUrl = url; log("Image loaded: " + $("imgFileName").textContent, "info"); });
+fileZone("vidZone","vidFile","vidFileName", 32, url => { vidDataUrl = url; log("Video loaded: " + $("vidFileName").textContent, "info"); });
+fileZone("audZone","audFile","audFileName", 16, url => { audDataUrl = url; log("Audio loaded: " + $("audFileName").textContent, "info"); });
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+$("btnSendToast").onclick = () => {
+  const msg = $("toastMsg").value.trim();
+  if (!msg) { alert("Please enter a message."); return; }
+  push({ type:"toast", title: $("toastTitle").value.trim()||"ADMIN", message: msg, duration: Number($("toastDur").value)||6, color: selectedToastColor, position: selectedPosition });
+  log(`Toast → ${selectedChannel||"ALL"}: "${msg.slice(0,40)}"`, "ok");
+};
+
+// ── IMAGE ─────────────────────────────────────────────────────────────────────
+$("btnSendImg").onclick = () => {
+  const url = imgDataUrl || $("imgUrl").value.trim();
+  if (!url) { alert("Provide an image URL or upload a file."); return; }
+  push({ type:"image", url, duration: Number($("imgDur").value)||0, dim: Number($("imgDim").value)||0.6, position: selectedPosition });
+  log(`Image overlay → ${selectedChannel||"ALL"}`, "ok");
+};
+$("btnClearImg").onclick = () => { push({ type:"clear" }); log(`Clear overlay → ${selectedChannel||"ALL"}`, "info"); };
+
+// ── VIDEO ─────────────────────────────────────────────────────────────────────
+$("btnSendVid").onclick = () => {
+  const url = vidDataUrl || $("vidUrl").value.trim();
+  if (!url) { alert("Provide a video URL or upload a file."); return; }
+  push({ type:"video", url, dim: Number($("vidDim").value)||0.85, loop: $("vidLoop").value==="1", controls:true, position: selectedPosition });
+  log(`Video overlay → ${selectedChannel||"ALL"}`, "ok");
+};
+$("btnClearVid").onclick = () => { push({ type:"clear" }); log(`Clear overlay → ${selectedChannel||"ALL"}`, "info"); };
+
+// ── AUDIO ─────────────────────────────────────────────────────────────────────
+$("btnSendAud").onclick = () => {
+  const url = audDataUrl || $("audUrl").value.trim();
+  if (!url) { alert("Provide an audio URL or upload a file."); return; }
+  push({ type:"audio", url, volume: Number($("audVol").value)||1, loop: $("audLoop").value==="1" });
+  log(`Audio → ${selectedChannel||"ALL"}`, "ok");
+};
+$("btnStopAud").onclick = () => { push({ type:"audio-stop" }); log(`Audio stop → ${selectedChannel||"ALL"}`, "info"); };
+
+// ── TAKEDOWN ──────────────────────────────────────────────────────────────────
+$("btnTakedown").onclick = () => {
+  if (!selectedChannel) return;
+  if (!confirm(`Take channel "${selectedChannel}" off-air? The broadcaster will be kicked.`)) return;
+  socket.emit("admin:takedown", selectedChannel, (res) => {
+    if (res.ok) {
+      log(`Takedown: "${selectedChannel}" removed from air.`, "err");
+      selectedChannel = null;
+      updateTargetBar();
+    } else {
+      log(`Takedown failed: ${res.error}`, "err");
+    }
+  });
+};
+
+// ── CLEAR ALL ─────────────────────────────────────────────────────────────────
+$("btnClearAll").onclick = () => {
+  push({ type:"clear" });
+  log(`Clear all overlays → ${selectedChannel||"ALL"}`, "info");
+};
+</script>
+</body>
+</html>
